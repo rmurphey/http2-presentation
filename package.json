@@ -1,0 +1,25 @@
+{
+  "name": "http2-presentation",
+  "version": "0.0.1",
+  "description": "experiments for a presentation about http2",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rmurphey/http2-presentation.git"
+  },
+  "keywords": [
+    "http2"
+  ],
+  "author": "Rebecca Murphey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rmurphey/http2-presentation/issues"
+  },
+  "homepage": "https://github.com/rmurphey/http2-presentation",
+  "dependencies": {
+    "http2": "^3.2.0"
+  }
+}
