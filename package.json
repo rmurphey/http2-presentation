@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/rmurphey/http2-presentation",
   "dependencies": {
+    "bunyan": "^1.5.1",
     "http2": "^3.2.0"
   }
 }
