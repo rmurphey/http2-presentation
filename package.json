@@ -4,7 +4,9 @@
   "description": "experiments for a presentation about http2",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "http1": "PORT=3000 node index",
+    "http2": "PORT=3001 H2=true node index"
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,7 @@
   "homepage": "https://github.com/rmurphey/http2-presentation",
   "dependencies": {
     "bunyan": "^1.5.1",
-    "http2": "^3.2.0"
+    "http2": "^3.2.0",
+    "scoutfile": "^2.0.0"
   }
 }
