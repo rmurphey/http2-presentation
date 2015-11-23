@@ -3,6 +3,7 @@
 var fs = require('fs');
 var path = require('path');
 var server = (process.env.H2 ? require('spdy') : require('https')).createServer;
+var h2 = require('http2');
 var log = require('./lib/log').createLogger(process.env.H2 ? 'h2' : 'h1');
 var qs = require('querystring');
 var gzip = require('zlib').createGzip();
@@ -30,7 +31,9 @@ function send (filename, response, resource) {
       response.setHeader('Cache-Control', `max-age=${maxAge[resource]}`)
     }
 
-    response.setHeader('Content-Type', contentTypes[resource.split('.')[1]]);
+    console.log(path.parse(resource).ext);
+
+    response.setHeader('Content-Type', contentTypes[path.parse(resource).ext.replace('.', '')]);
 
     if (filename.match(/\.gz$/)) {
       response.setHeader('Content-Encoding', 'gzip');
@@ -58,15 +61,19 @@ function onRequest (request, response) {
   let url = parts[0];
   let filename = path.join(__dirname, 'static', url);
 
-  // push(request, response);
+  if (query.push) {
+    console.log('asked for push');
+  }
+
   if (query.push && response.push) {
+    console.log('pushing');
     let pushFilename = path.join(__dirname, 'static', query.push);
     let pushStream = response.push(query.push, {
       request : {
         accept : '*/*'
       },
       response : {
-        'Content-Type' : contentTypes[query.push.split('.')[1]]
+        'Content-Type' : contentTypes[path.parse(query.push).ext.replace('.', '')] || 'text/html'
       }
     });
 
@@ -80,7 +87,7 @@ function onRequest (request, response) {
 
 log.info('generating scout files');
 
-Promise.all(scouts()).then(function () {
+Promise.all(scouts()).then(() => {
   server({
     key : fs.readFileSync(KEY_FILE),
     cert : fs.readFileSync(CERT_FILE),
@@ -88,5 +95,11 @@ Promise.all(scouts()).then(function () {
       protocols : [ 'h2' ]
     }
   }, onRequest).listen(PORT);
+
   log.info(`${process.env.H2 ? 'HTTP/2' : 'HTTP/1.1'} server running on https://localhost:${PORT}`);
+
+  // http2.createServer({
+  //   key : fs.readFileSync(KEY_FILE),
+  //   cert : fs.readFileSync(CERT_FILE)
+  // }, onRequest).listen(PORT + 2);
 });
