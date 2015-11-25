@@ -96,7 +96,7 @@ Promise.all(scouts()).then(() => {
     }
   }, onRequest).listen(PORT);
 
-  log.info(`${process.env.H2 ? 'HTTP/2' : 'HTTP/1.1'} server running on https://localhost:${PORT}`);
+  log.info(`${process.env.H2 ? 'HTTP/2 (node-spdy)' : 'HTTP/1.1'} server running on https://localhost:${PORT}`);
 
   // http2.createServer({
   //   key : fs.readFileSync(KEY_FILE),
