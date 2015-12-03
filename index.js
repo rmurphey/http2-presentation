@@ -7,10 +7,8 @@ var h2 = require('http2');
 var log = require('./lib/log').createLogger(process.env.H2 ? 'h2' : 'h1');
 var qs = require('querystring');
 var gzip = require('zlib').createGzip();
-var scouts = require('./generate-scout');
+var config = require('./config');
 
-const KEY_FILE = path.join(__dirname, 'keys/localhost.key');
-const CERT_FILE = path.join(__dirname, 'keys/localhost.crt');
 const PORT = process.env.PORT || 9000;
 
 var maxAge = {
@@ -23,7 +21,7 @@ var contentTypes = {
   js : 'application/javascript'
 };
 
-function send (filename, response, resource) {
+function send (filename, response, resource, cb) {
   if (fs.existsSync(filename) && fs.statSync(filename).isFile()) {
     let fileStream = fs.createReadStream(filename);
 
@@ -33,7 +31,10 @@ function send (filename, response, resource) {
 
     console.log(path.parse(resource).ext);
 
-    response.setHeader('Content-Type', contentTypes[path.parse(resource).ext.replace('.', '')]);
+    response.setHeader(
+      'Content-Type',
+      contentTypes[path.parse(resource).ext.replace('.', '')]
+    );
 
     if (filename.match(/\.gz$/)) {
       response.setHeader('Content-Encoding', 'gzip');
@@ -61,12 +62,9 @@ function onRequest (request, response) {
   let url = parts[0];
   let filename = path.join(__dirname, 'static', url);
 
-  if (query.push) {
-    console.log('asked for push');
-  }
+  send(filename, response, url, cb);
 
   if (query.push && response.push) {
-    console.log('pushing');
     let pushFilename = path.join(__dirname, 'static', query.push);
     let pushStream = response.push(query.push, {
       request : {
@@ -77,29 +75,17 @@ function onRequest (request, response) {
       }
     });
 
-    log.info('attempting push', query.push);
-
     fs.createReadStream(pushFilename).pipe(pushStream);
   }
-
-  return send(filename, response, url);
 }
 
-log.info('generating scout files');
+server({
+  key : config.KEY_FILE,
+  cert : config.CERT_FILE,
+  ca: config.CA,
+  spdy : {
+    protocols : [ 'h2', 'http/1.1' ]
+  }
+}, onRequest).listen(PORT);
 
-Promise.all(scouts()).then(() => {
-  server({
-    key : fs.readFileSync(KEY_FILE),
-    cert : fs.readFileSync(CERT_FILE),
-    spdy : {
-      protocols : [ 'h2' ]
-    }
-  }, onRequest).listen(PORT);
-
-  log.info(`${process.env.H2 ? 'HTTP/2 (node-spdy)' : 'HTTP/1.1'} server running on https://localhost:${PORT}`);
-
-  // http2.createServer({
-  //   key : fs.readFileSync(KEY_FILE),
-  //   cert : fs.readFileSync(CERT_FILE)
-  // }, onRequest).listen(PORT + 2);
-});
+log.info(`${process.env.H2 ? 'HTTP/2 (node-spdy)' : 'HTTP/1.1'} server running on https://localhost:${PORT}`);
